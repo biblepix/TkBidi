@@ -11,7 +11,8 @@ Depending on the platform, this problem is usually solved either on platform lev
 * Unix/Linux: so far, the Tk library and any associated widgets are not able to perform this task. Windows seems to have its own underlying mechanism to solve the problem before texts even reach Tk widgets.
 
 TkBidi is a complete solution for all Linux Tk widgets. It has been tested extensively on the author's own program "BiblePix" <https://biblepix.vollmar.ch>.
-It should be incorporated as a standard solution into Tk.
+
+It ought to be incorporated as a standard solution into Tk.
 
 ## The Solution
 

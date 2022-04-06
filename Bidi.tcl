@@ -1,9 +1,7 @@
-# ~/Biblepix/prog/src/share/Bidi.tcl
-# Fixes missing bidi algorithm for Unix and Win Tk Hebrew/Arabic
-# called by BdfPrint + several Setup widgets
-# optional 'args' cuts out vowels (needed for BdfPrint)
+# ~/BidiTk/Bidi.tcl
+# Fixes missing bidi algorithm for Unix Tcl/Tk widgets (Hebrew/Arabic)
 # Author: Peter Vollmar, biblepix.vollmar.ch
-# Updated: 14nov21 pv
+# Updated: 6apr22 pv
 
 namespace eval bidi {
   
@@ -117,10 +115,9 @@ namespace eval bidi {
   ##optional args: 
   
   ## 1. reqW: required line width of widget (default: 60)
-  ## 2. vowelled(1/0): 0 = strip of all vowels 
-  ## 3. bdf(1/0): (don't) reverse line order (BDF printing is from right to left)
-  ##called by BiblePix Setup program
-  proc fixBidi {s {vowelled 1} {bdf 0} {reqW 0} } {
+  ## 2. vowelled (1/0): 0 = (don't) strip any vowel signs present 
+  ## 3. ltr (1/0): (don't) reverse letter order (defaults to 1 = rtl)
+  proc fixBidi {s {vowelled 1} {ltr 0} {reqW 0} } {
 
     global os
     global [namespace current]::he_range
@@ -176,8 +173,8 @@ namespace eval bidi {
     foreach line $linesplit1 {
     
     #If Setup: Compute line length & fit to any required width
-    ##this works with BiblePix Bdf & Twd texts
-      if {$bdf || !$reqW} {
+    ##this works with BiblePix ltr & Twd texts
+      if {$ltr || !$reqW} {
       
         lappend linesplit2 $line
       
@@ -197,7 +194,7 @@ namespace eval bidi {
           }
         }      
         
-      } ;#END if bdf/reqW 
+      } ;#END if ltr/reqW 
 
     } ;#END foreach line I
 
@@ -209,7 +206,7 @@ namespace eval bidi {
       foreach word $line {
 
         #add to line pre-reverted if ASCII (=probably a number)
-        #TODO reverting is only needed if Bdf! - why?
+        #TODO reverting is only needed if ltr! - why?
         if [string is ascii $word] {
           lappend newline [string reverse $word]
           continue  
@@ -238,7 +235,7 @@ namespace eval bidi {
       } ;#END foreach word
         
       #Revert Hebrew+Arabic text line for Setup widgets
-      if {$os=="Linux" && !$bdf} {
+      if {$os=="Linux" && !$ltr} {
         set newline [string reverse $newline]
       }
       #append with trailing break
@@ -311,12 +308,6 @@ namespace eval bidi {
     set firstLetterPos [lindex $arLetterL 0]
     set lastLetterPos [lindex $arLetterL end]
 
-#TODO Testingn hamza
-#set lastlettercode [scan $lastLetterPos %c]
-#if {$lastlettercode == 1569} {
-#  incr lastLetterPos -1
-#}
-
     #Scan word for coded & non-coded characters
     foreach char $letterL {
       
@@ -387,7 +378,7 @@ namespace eval bidi {
   }
   
   # devowelise
-  ##clears all vowel signs from Hebrew (he), Arabic (ar), Urdu (ur) or Persian (fa) text
+  ##strips all vowel signs from Hebrew (he), Arabic (ar), Urdu (ur) or Persian (fa) text
   ##producing readable modern type text from poetic or religious vowelled text
   ##necessary arguments: s = text string / lang = 'he' OR 'ar' (including Urdu+Farsi)
   ##called by fixBidi
@@ -410,9 +401,9 @@ namespace eval bidi {
   }
   
   # chaser>male
-  ##attempts to convert vowelled standard text in "ktiv chaser" to "ktiv male" (כתיב מלא) = "modern full spelling"
-  ##as common in modern Hebrew, by replacing some vowel signs by the letters Jud (י) or Wav (ו)
-  ##called by devowelise
+  ## attempts to convert vowelled standard Hebrew text in "ktiv chaser" (כתיב חסר) to "ktiv male" (כתיב מלא) 
+  ## = "modern full spelling" as common in modern texts, by replacing some vowel signs by the letters Jud (י) or Wav (ו)
+  ## called by devowelise
   proc chaser>male s {
 
   #TODO Heb. double waw if ...? נתודה>>נתוודה   | usw.  עולה > עוולה
