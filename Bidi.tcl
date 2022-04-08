@@ -119,7 +119,8 @@ namespace eval bidi {
   ## 3. ltr (1/0): (don't) reverse letter order (defaults to 1 = rtl)
   proc fixBidi {s {vowelled 1} {ltr 0} {reqW 0} } {
 
-    global os
+    set os $::tcl_platform(os)
+
     global [namespace current]::he_range
     global [namespace current]::ar_range
     global [namespace current]::ar_numerals
