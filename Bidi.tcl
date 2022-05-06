@@ -1,7 +1,9 @@
-# ~/BidiTk/Bidi.tcl
-# Fixes missing bidi algorithm for Unix Tcl/Tk widgets (Hebrew/Arabic)
+# ~/Biblepix/prog/src/share/Bidi.tcl
+# Fixes missing bidi algorithm for Unix and Win Tk Hebrew/Arabic
+# called by BdfPrint + several Setup widgets
+# optional 'args' cuts out vowels (needed for BdfPrint)
 # Author: Peter Vollmar, biblepix.vollmar.ch
-# Updated: 6apr22 pv
+# Updated: 6may22
 
 namespace eval bidi {
   
@@ -88,23 +90,24 @@ namespace eval bidi {
   array set 1670 {n che l 1 i \ufb7c m \ufb7d f \ufb7b}
   array set 1711 {n gaf l 1 i \ufb94 m \ufb95 f \ufb93}
   array set 1657 {n tte l 1 i \ufb68 m \ufb69 f \ufb67}
+  
+  
+  #TODO test !!!!!!!!!!!!!!!!!!!!!!!!!!
   #Urdu special letters
   array set 1705 {n kaf_urdu l 1 i \uFEDB m \uFEDC f \uFEDA}
-  array set 1722 {n nun_ghunna l 1 i \u06ba f \ufb9f}
+  array set 1722 {n nun_ghunna l 1 i \u06ba m \u06ba f \ufb9f}
   array set 1740 {n choti_ye l 1 i \uFEF3 m \uFEF4 f \uFEF0}
-  array set 1746 {n bari_ye l 1 f \uFBAF}
-  array set 1747 {n bari_ye_hamza l 1 f \uFBB1}
+  array set 1746 {n bari_ye l 1  i \uFBAF m \uFBAF f \uFBAF}
+  array set 1747 {n bari_ye_hamza l 1 i \uFBB1 m \uFBB1 f \uFBB1}
   array set 1729 {n he_goal l 1 i \uFBA8 m \uFBA9 f \uFBA7} ;#= choti_he with hamza
-  array set 1730 {n he_goal_hamza l 1 f \u06c2}
-  array set 1726 {n do_chashmi_he l 1 i \uFEEB m \uFEEC}
+  array set 1730 {n he_goal_hamza l 1 i \u06c2 m \u06c2 f \u06c2}
+  array set 1726 {n do_chashmi_he l 1 i \uFEEB m \uFEEC f \uFEEC}
   ##Urdu non left-linking
-  array set 1688 {n zhe l 0 m \ufb8b f \ufb8b}
-  array set 1672 {n dde l 0 m \ufb89 f \ufb89}
-  array set 1681 {n rre l 0 m \ufb8d f \ufb8d}
-  array set 1731 {n te_marbuta_goal l 0 f \u06c3} ;#=ta_marbuta?
+  array set 1688 {n zhe l 0 i \ufb8b m \ufb8b f \ufb8b}
+  array set 1672 {n dde l 0 i \ufb89 m \ufb89 f \ufb89}
+  array set 1681 {n rre l 0 i \ufb8d m \ufb8d f \ufb8d}
+  array set 1731 {n te_marbuta_goal l 0 i \u06c3 m \u06c3 f \u06c3} ;#=ta_marbuta?
 
-#TODO testing Hamza
-#  array set 1569 {n hamza l 0 i \u0621 m \u0621 f \u0621}
   
 ### P R O C S  ##############################################################
 
@@ -115,12 +118,12 @@ namespace eval bidi {
   ##optional args: 
   
   ## 1. reqW: required line width of widget (default: 60)
-  ## 2. vowelled (1/0): 0 = (don't) strip any vowel signs present 
-  ## 3. ltr (1/0): (don't) reverse letter order (defaults to 1 = rtl)
-  proc fixBidi {s {vowelled 1} {ltr 0} {reqW 0} } {
+  ## 2. vowelled(1/0): 0 = strip of all vowels 
+  ## 3. bdf(1/0): (don't) reverse line order (BDF printing is from right to left)
+  ##called by BiblePix Setup program
+  proc fixBidi {s {vowelled 1} {bdf 0} {reqW 0} } {
 
-    set os $::tcl_platform(os)
-
+    global os
     global [namespace current]::he_range
     global [namespace current]::ar_range
     global [namespace current]::ar_numerals
@@ -174,8 +177,8 @@ namespace eval bidi {
     foreach line $linesplit1 {
     
     #If Setup: Compute line length & fit to any required width
-    ##this works with BiblePix ltr & Twd texts
-      if {$ltr || !$reqW} {
+    ##this works with BiblePix Bdf & Twd texts
+      if {$bdf || !$reqW} {
       
         lappend linesplit2 $line
       
@@ -195,7 +198,7 @@ namespace eval bidi {
           }
         }      
         
-      } ;#END if ltr/reqW 
+      } ;#END if bdf/reqW 
 
     } ;#END foreach line I
 
@@ -207,7 +210,7 @@ namespace eval bidi {
       foreach word $line {
 
         #add to line pre-reverted if ASCII (=probably a number)
-        #TODO reverting is only needed if ltr! - why?
+        #TODO reverting is only needed if Bdf! - why?
         if [string is ascii $word] {
           lappend newline [string reverse $word]
           continue  
@@ -223,7 +226,7 @@ namespace eval bidi {
           #pre-revert Arabic numerals, no formatting
           if [regexp $ar_numerals $word] {
             
-            set newword [string reverse $newword]
+            set newword [string reverse $word]
 
           } else {
 
@@ -236,7 +239,7 @@ namespace eval bidi {
       } ;#END foreach word
         
       #Revert Hebrew+Arabic text line for Setup widgets
-      if {$os=="Linux" && !$ltr} {
+      if {$os=="Linux" && !$bdf} {
         set newline [string reverse $newline]
       }
       #append with trailing break
@@ -309,6 +312,12 @@ namespace eval bidi {
     set firstLetterPos [lindex $arLetterL 0]
     set lastLetterPos [lindex $arLetterL end]
 
+#TODO Testingn hamza
+#set lastlettercode [scan $lastLetterPos %c]
+#if {$lastlettercode == 1569} {
+#  incr lastLetterPos -1
+#}
+
     #Scan word for coded & non-coded characters
     foreach char $letterL {
       
@@ -379,7 +388,7 @@ namespace eval bidi {
   }
   
   # devowelise
-  ##strips all vowel signs from Hebrew (he), Arabic (ar), Urdu (ur) or Persian (fa) text
+  ##clears all vowel signs from Hebrew (he), Arabic (ar), Urdu (ur) or Persian (fa) text
   ##producing readable modern type text from poetic or religious vowelled text
   ##necessary arguments: s = text string / lang = 'he' OR 'ar' (including Urdu+Farsi)
   ##called by fixBidi
@@ -402,9 +411,9 @@ namespace eval bidi {
   }
   
   # chaser>male
-  ## attempts to convert vowelled standard Hebrew text in "ktiv chaser" (כתיב חסר) to "ktiv male" (כתיב מלא) 
-  ## = "modern full spelling" as common in modern texts, by replacing some vowel signs by the letters Jud (י) or Wav (ו)
-  ## called by devowelise
+  ##attempts to convert vowelled standard text in "ktiv chaser" to "ktiv male" (כתיב מלא) = "modern full spelling"
+  ##as common in modern Hebrew, by replacing some vowel signs by the letters Jud (י) or Wav (ו)
+  ##called by devowelise
   proc chaser>male s {
 
   #TODO Heb. double waw if ...? נתודה>>נתוודה   | usw.  עולה > עוולה
